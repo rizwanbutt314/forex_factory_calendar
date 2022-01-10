@@ -1,0 +1,10 @@
+
+# Files
+*.csv
+*.zip
+*.DS_Store
+
+
+# Folders
+env/
+undetected_chromedriver/

@@ -1,0 +1,254 @@
+def main():
+
+    driver = get_chrome_driver()
+
+    print(f"Visiting: {THIS_WEEK_URL}")
+
+    driver.get(THIS_WEEK_URL)
+    wait_for_element(
+        driver, '//div[contains(@class, "calendarexports")]//a[contains(text(), "JSON")]')
+
+    element = get_element(
+        driver, '//div[contains(@class, "calendarexports")]//a[contains(text(), "JSON")]')
+    json_link = element.get_attribute("href")
+
+    print(f"Extract JSON file link: {json_link}")
+
+    response = requests.get(json_link)
+    data = response.json()
+
+    # Filter data to get only High Impact
+    # All Data now
+    print("Filtering High Impact data")
+    result = list(filter(lambda x: x["impact"] == "High", data))
+
+    # Save data
+    print("Saving data")
+    for record in data:
+        save_data(record)
+
+    print("Execution completed")
+
+
+def main_v2():
+    scraper = cloudscraper.create_scraper()
+
+    data = list()
+    for url in [THIS_WEEK_URL, NEXT_WEEK_URL]:
+        soup = make_soup(scraper.get(url).text)
+        dom = etree.HTML(str(soup))
+        json_link = dom.xpath(
+            '//div[contains(@class, "calendarexports")]//a[contains(text(), "JSON")]')[0].attrib["href"]
+
+        response = requests.get(json_link)
+        calendar_data = response.json()
+        calendar_data = list(
+            filter(lambda x: x["impact"] == "High", calendar_data))
+        data.extend(calendar_data)
+
+    print(data)
+
+    for record in data:
+        save_data(record)
+
+
+def main_v3(start_date, end_date):
+    # this_week_start_date, next_week_end_date = generate_weeks_date_range()
+    # start_date = this_week_start_date.strftime("%B %d, %Y")
+    # end_date = next_week_end_date.strftime("%B %d, %Y")
+
+    scraper = cloudscraper.create_scraper()
+    soup = make_soup(scraper.get(THIS_WEEK_URL).text)
+    dom = etree.HTML(str(soup))
+
+    modelData = dom.xpath(
+        '//div[@id="flexBox_flex_calendar_mainCal"]//form[@method="post"]//input[contains(@name, "modelData")]')[0].attrib["value"]
+
+    headers = {
+        'authority': 'www.forexfactory.com',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'accept': '*/*',
+        'x-requested-with': 'XMLHttpRequest',
+        'sec-ch-ua-platform': '"macOS"',
+        'origin': 'https://www.forexfactory.com',
+        'sec-fetch-site': 'same-origin',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-dest': 'empty',
+        'referer': 'https://www.forexfactory.com/calendar',
+        'accept-language': 'en-US,en;q=0.9',
+    }
+
+    data = [
+        ('securitytoken', 'guest'),
+        ('do', 'saveoptions'),
+        ('setdefault', 'no'),
+        ('ignoreinput', 'no'),
+        ('flex[Calendar_mainCal][idSuffix]', ''),
+        ('flex[Calendar_mainCal][_flexForm_]', 'flexForm'),
+        ('flex[Calendar_mainCal][modelData]', modelData),
+        ('flex[Calendar_mainCal][begindate]', start_date),
+        ('flex[Calendar_mainCal][enddate]', end_date),
+        ('flex[Calendar_mainCal][calendardefault]', 'thisweek'),
+        ('flex[Calendar_mainCal][impacts][high]', 'high'),
+        ('flex[Calendar_mainCal][impacts][medium]', 'medium'),
+        ('flex[Calendar_mainCal][impacts][low]', 'low'),
+        ('flex[Calendar_mainCal][impacts][holiday]', 'holiday'),
+        ('flex[Calendar_mainCal][_cbarray_]', '1'),
+        ('flex[Calendar_mainCal][_cbarray_]', '1'),
+        ('flex[Calendar_mainCal][_cbarray_]', '1'),
+        ('flex[Calendar_mainCal][eventtypes][growth]', 'growth'),
+        ('flex[Calendar_mainCal][eventtypes][inflation]', 'inflation'),
+        ('flex[Calendar_mainCal][eventtypes][employment]', 'employment'),
+        ('flex[Calendar_mainCal][eventtypes][centralbank]', 'centralbank'),
+        ('flex[Calendar_mainCal][eventtypes][bonds]', 'bonds'),
+        ('flex[Calendar_mainCal][eventtypes][housing]', 'housing'),
+        ('flex[Calendar_mainCal][eventtypes][sentiment]', 'sentiment'),
+        ('flex[Calendar_mainCal][eventtypes][pmi]', 'pmi'),
+        ('flex[Calendar_mainCal][eventtypes][speeches]', 'speeches'),
+        ('flex[Calendar_mainCal][eventtypes][misc]', 'misc'),
+        ('flex[Calendar_mainCal][currencies][aud]', 'aud'),
+        ('flex[Calendar_mainCal][currencies][cad]', 'cad'),
+        ('flex[Calendar_mainCal][currencies][chf]', 'chf'),
+        ('flex[Calendar_mainCal][currencies][cny]', 'cny'),
+        ('flex[Calendar_mainCal][currencies][eur]', 'eur'),
+        ('flex[Calendar_mainCal][currencies][gbp]', 'gbp'),
+        ('flex[Calendar_mainCal][currencies][jpy]', 'jpy'),
+        ('flex[Calendar_mainCal][currencies][nzd]', 'nzd'),
+        ('flex[Calendar_mainCal][currencies][usd]', 'usd'),
+        ('false', ''),
+    ]
+
+    response = requests.post(
+        'https://www.forexfactory.com/flex.php', headers=headers, data=data)
+
+    soup = make_soup(response.text)
+
+    # print(soup)
+    # table = soup.find("table", {"class": "calendar__table"})
+    # table_body = table.find("tbody")
+    # saving the xml file
+    # with open('topnewsfeed.xml', 'wb') as f:
+    #     f.write(response.text)
+
+    import xml.etree.ElementTree as ET
+
+    parser = etree.XMLParser(recover=True)
+    myroot = ET.fromstring(response.text, parser)
+    print(myroot.find("flex"))
+
+    rows = soup.find_all("tr", {"class": "calendar_row"})
+    print("Total: ", len(rows))
+    print(soup.find("flex"))
+
+    date_txt = ""
+    all_data = list()
+    for row in rows:
+        impact = ""
+        date = row.find("td", {"class": "date"}).find(
+            "span", {"class": "date"}).get_text().strip()
+        if date:
+            date_txt = date
+
+        _time = row.find("td", {"class": "time"}).get_text().strip()
+        currency = row.find("td", {"class": "currency"}).get_text().strip()
+        impact_classes = row.find("td", {"class": "impact"})["class"]
+        if "high" in impact_classes:
+            impact = "High"
+        elif "low" in impact_classes:
+            impact = "Low"
+        elif "medium" in impact_classes:
+            impact = "Medium"
+
+        title = row.find("td", {"class": "event"}).find(
+            "span").get_text().strip()
+        actual = row.find("td", {"class": "actual"}).get_text().strip()
+        forecast = row.find("td", {"class": "forecast"}).get_text().strip()
+        previous = row.find("td", {"class": "previous"}).find(
+            "span").get_text().strip()
+
+        all_data.append({
+            "title": title,
+            "currency": currency,
+            "time": _time,
+            "date": date_txt,
+            "impact": impact,
+            "actual": actual,
+            "forecast": forecast,
+            "previous": previous
+        })
+
+    for record in all_data:
+        save_data(record)
+
+
+def main():
+    scraper = cloudscraper.create_scraper()
+
+    all_data = list()
+    for url in [THIS_WEEK_URL, NEXT_WEEK_URL]:
+        print(f"Visting: {url}")
+        soup = make_soup(scraper.get(url).text)
+
+        main_table = soup.find("table", {"class": "calendar__table"})
+        rows = main_table.find_all("tr", {"class": "calendar_row"})
+
+        date_txt = ""
+        time_txt = ""
+        for row in rows:
+            date = row.find("td", {"class": "date"}).get_text().strip()
+            if date:
+                date_txt = remove_days_from_string(date)
+
+            _time = row.find("td", {"class": "time"}).get_text().strip()
+            if _time:
+                time_txt = _time
+            currency = row.find("td", {"class": "currency"}).get_text().strip()
+
+            impact = ""
+            impact_classes = row.find("td", {"class": "impact"})["class"]
+            impact_classes = " ".join(impact_classes)
+            if "high" in impact_classes:
+                impact = "High"
+            elif "low" in impact_classes:
+                impact = "Low"
+            elif "medium" in impact_classes:
+                impact = "Medium"
+            elif "holiday" in impact_classes:
+                impact = "Holiday"
+
+            title = row.find("td", {"class": "event"}).get_text().strip()
+            actual = row.find("td", {"class": "actual"}).get_text().strip()
+            forecast = row.find("td", {"class": "forecast"}).get_text().strip()
+            previous = row.find("td", {"class": "previous"}).get_text().strip()
+
+            if impact == "High":
+                all_data.append({
+                    "title": title,
+                    "currency": currency,
+                    "date": to_date_from_month_and_day(date_txt),
+                    "time": time_txt,
+                    "impact": impact.lower(),
+                    "actual": actual,
+                    "forecast": forecast,
+                    "previous": previous
+                })
+
+    # Get Daily FX data
+    daily_fx_data = get_daily_fx_data()
+    if daily_fx_data:
+        all_data.extend(daily_fx_data)
+
+    # Print pretty json
+    json_formatted_str = json.dumps(all_data, indent=2)
+    print(json_formatted_str)
+
+    print("Sacing data to csv...")
+    for record in all_data:
+        save_data(record)
+
+    print("Saving data to DB...")
+    save_to_db(all_data)
+
+    print("Execution Completed")
+
