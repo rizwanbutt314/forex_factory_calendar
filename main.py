@@ -1,15 +1,13 @@
 import json
 
-import requests
+import cloudscraper
 
 from utils import (
     make_soup,
     save_data,
     remove_days_from_string,
     to_date_from_month_and_day,
-    save_to_db,
-    get_chrome_driver,
-    wait_for_element
+    save_to_db
 )
 
 THIS_WEEK_URL = "https://www.forexfactory.com/calendar"
@@ -18,8 +16,9 @@ DAILY_FX_URL = "https://www.dailyfx.com/economic-calendar#next-seven-days"
 
 
 def get_daily_fx_data():
+    scraper = cloudscraper.create_scraper()
     print(f"Visting: {DAILY_FX_URL}")
-    soup = make_soup(requests.get(DAILY_FX_URL).text)
+    soup = make_soup(scraper.get(DAILY_FX_URL).text)
 
     data = list()
     scripts = soup.find_all("script")
@@ -58,18 +57,13 @@ def get_daily_fx_data():
 
 
 def main():
-
-    driver = get_chrome_driver()
+    scraper = cloudscraper.create_scraper()
 
     all_data = list()
     for url in [THIS_WEEK_URL, NEXT_WEEK_URL]:
-        print(f"Visiting: {url}")
+        print(f"Visting: {url}")
+        soup = make_soup(scraper.get(url).text)
 
-        driver.get(url)
-        wait_for_element(
-            driver, '//div[contains(@class, "calendarexports")]//a[contains(text(), "JSON")]')
-
-        soup = make_soup(driver.page_source)
         main_table = soup.find("table", {"class": "calendar__table"})
         rows = main_table.find_all("tr", {"class": "calendar_row"})
 
@@ -135,4 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

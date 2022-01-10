@@ -3,12 +3,6 @@ import csv
 import datetime
 
 import mysql.connector
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 os.environ['WDM_LOG_LEVEL'] = '0'
@@ -21,37 +15,6 @@ DB_USERNAME = "root"
 DB_PASSWORD = "mysql123"
 DB_DATABASE = "frx"
 DB_TABLE = "frx_data"
-
-def get_chrome_driver():
-    # Chrome options
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-logging')
-    options.add_argument("--disable-blink-features=AutomationControlled")
-
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
-
-    return driver
-
-
-def wait_for_element(driver, xpath):
-    waiting_element = WebDriverWait(driver, 40).until(EC.presence_of_element_located(
-        (By.XPATH, xpath)))
-
-
-    next_page_element = driver.find_element_by_xpath("""
-    //table[@id="GridView1"]//td[.//a[contains(@href, "javascript:__doPostBack('GridView1'")]]//td[not(./a)]/following-sibling::td[1]//a[1]
-    """)
-
-    href = next_page_element.get_attribute("href")
-
-    next_page_number = href.split("Page$")[1].split("'")[0]
-
-    driver.execute_script(f"__doPostBack('GridView1','Page${next_page_number}')")
-
-
 
 
 def make_soup(page_source):

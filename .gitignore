@@ -8,3 +8,4 @@
 # Folders
 env/
 undetected_chromedriver/
+__pycache__/
