@@ -101,7 +101,7 @@ def save_to_db(data):
         auth_plugin='mysql_native_password'
     )
 
-    mycursor = mydb.cursor()
+    mycursor = mydb.cursor(buffered=True)
 
     # Check for duplicates
     filtered_data = list()
@@ -113,15 +113,15 @@ def save_to_db(data):
             filtered_data.append(record)
         else:
             # Update the existing data
-            sql = f"""UPDATE {DB_TABLE} SET _time="{record['time']}", actual="{record['actual']}", forecast="{record['forecast']}", previous="{record['previous']}" WHERE title="{record['title']}" AND currency="{record['currency']}" AND impact="{record['impact']}" AND _date="{record['date']}" """
+            sql = f"""UPDATE {DB_TABLE} SET _time="{record['time']}", latest_release_link="{record['latest_release_link']}", actual="{record['actual']}", forecast="{record['forecast']}", previous="{record['previous']}" WHERE title="{record['title']}" AND currency="{record['currency']}" AND impact="{record['impact']}" AND _date="{record['date']}" """
             mycursor.execute(sql)
             mydb.commit()
 
     # INSERT data
-    sql = f"INSERT INTO {DB_TABLE} (title, currency, _date, _time, impact, actual, forecast, previous) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    sql = f"INSERT INTO {DB_TABLE} (title, currency, _date, _time, impact, actual, forecast, previous, latest_release_link) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
     data_to_db = [(d["title"], d["currency"], d["date"], d["time"],
-                   d["impact"], d["actual"], d["forecast"], d["previous"]) for d in filtered_data]
+                   d["impact"], d["actual"], d["forecast"], d["previous"], d["latest_release_link"]) for d in filtered_data]
 
     mycursor.executemany(sql, data_to_db)
     mydb.commit()

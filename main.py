@@ -1,4 +1,5 @@
 import json
+import time
 
 import cloudscraper
 
@@ -50,7 +51,8 @@ def get_daily_fx_data():
             "impact": record["importance"],
             "actual": record["actual"],
             "forecast": record["forecast"],
-            "previous": record["previous"]
+            "previous": record["previous"],
+            "latest_release_link": ""
         })
 
     return all_data
@@ -70,6 +72,8 @@ def main():
         date_txt = ""
         time_txt = ""
         for row in rows:
+            event_id = row["data-eventid"]
+            
             date = row.find("td", {"class": "date"}).get_text().strip()
             if date:
                 date_txt = remove_days_from_string(date)
@@ -97,6 +101,14 @@ def main():
             previous = row.find("td", {"class": "previous"}).get_text().strip()
 
             if impact == "High":
+                try:
+                    # Get latest release
+                    details_url = f"https://www.forexfactory.com/flex.php?do=ajax&contentType=Content&flex=calendar_mainCal&details={event_id}"
+                    soup = make_soup(scraper.get(details_url).text)
+                    latest_release_link = soup.find("a", string="latest release")["href"]
+                except:
+                    latest_release_link = ""
+
                 all_data.append({
                     "title": title,
                     "currency": currency,
@@ -105,8 +117,10 @@ def main():
                     "impact": impact.lower(),
                     "actual": actual,
                     "forecast": forecast,
-                    "previous": previous
+                    "previous": previous,
+                    "latest_release_link": latest_release_link
                 })
+                
 
     # Get Daily FX data
     daily_fx_data = get_daily_fx_data()
@@ -128,4 +142,19 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    retries_count = 10
+    iteration_count = 1
+    wait_seconds = 5
+    while iteration_count <= retries_count:
+        try:
+            main()
+            break
+        except Exception as err:
+            print(f"Exception: {str(err)}")
+            if "Detected a Cloudflare" not in str(err):
+                break
+            print(f"waiting for {wait_seconds} secs to retry...")
+            time.sleep(wait_seconds)
+
+        iteration_count += 1
+
