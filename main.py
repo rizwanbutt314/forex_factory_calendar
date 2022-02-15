@@ -123,9 +123,9 @@ def main():
                 
 
     # Get Daily FX data
-    daily_fx_data = get_daily_fx_data()
-    if daily_fx_data:
-        all_data.extend(daily_fx_data)
+    # daily_fx_data = get_daily_fx_data()
+    # if daily_fx_data:
+    #     all_data.extend(daily_fx_data)
 
     # Print pretty json
     json_formatted_str = json.dumps(all_data, indent=2)

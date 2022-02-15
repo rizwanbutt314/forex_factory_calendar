@@ -2,6 +2,7 @@ import os
 import csv
 import datetime
 
+import pandas as pd
 import mysql.connector
 from bs4 import BeautifulSoup
 
@@ -125,3 +126,63 @@ def save_to_db(data):
 
     mycursor.executemany(sql, data_to_db)
     mydb.commit()
+
+
+def generate_years_months_dates():
+    all_dates = list()
+    months = 12
+    for year in ["2020", "2021", "2022"]:
+        monthStart = pd.date_range(
+            year, periods=months, freq='MS').strftime("%B %d, %Y")
+        monthEnd = pd.date_range(year, periods=months,
+                                 freq='M').strftime("%B %d, %Y")
+
+        all_dates.extend([(s, e) for s, e in zip(monthStart, monthEnd)])
+
+    return all_dates
+
+
+def str_to_datetime(date_str, format="%B %d, %Y"):
+    return datetime.datetime.strptime(date_str, format)
+
+
+def datetime_to_str(date, format="%Y-%m-%d"):
+    return date.strftime(format)
+
+
+def get_next_date(date, days=1):
+    return date + datetime.timedelta(days=days)
+
+
+def get_today_date():
+    return datetime.datetime.today()
+
+
+
+######### For data mapping
+def get_db_connection():
+    conn = mysql.connector.connect(
+        host=DB_HOST,
+        user=DB_USERNAME,
+        password=DB_PASSWORD,
+        database=DB_DATABASE,
+        auth_plugin='mysql_native_password'
+    )
+
+    cur = conn.cursor(buffered=True, dictionary=True)
+    return conn, cur
+
+
+def update_to_db(data, table=""):
+    conn, cur = get_db_connection()
+
+    for record in data:
+        # Update the existing data
+        sql = f"""
+                UPDATE {table} 
+                SET news_24="{record['news_24']}", news_48="{record['news_48']}", news_72="{record['news_72']}" 
+                WHERE symbol="{record['symbol']}" AND date_time="{record['date_time']}" """
+        cur.execute(sql)
+        
+    conn.commit()
+    conn.close()
