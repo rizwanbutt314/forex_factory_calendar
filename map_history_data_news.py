@@ -153,15 +153,6 @@ def iterate_db_results(cursor, chunk_size=10):
         #     yield result
 
 def main():
-    # algo_df = pd.read_csv("forex_algo_signal_day.csv")
-    # algo_df['news_72'] = algo_df['news_24']
-    # algo_df['news_24_events'] = algo_df['news_24']
-    # algo_df['news_48_events'] = algo_df['news_24']
-    # algo_df['news_72_events'] = algo_df['news_24']
-    # algo_df = algo_df.apply(check_news, axis=1)
-
-    # algo_df.to_csv("final_data.csv", index=False)
-
     
     table = "forex_algo_signal_day_csv"
     conn, cur = get_db_connection()
