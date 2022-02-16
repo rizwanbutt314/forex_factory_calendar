@@ -1,7 +1,7 @@
 import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from utils import (
+from utils_v2 import (
     make_soup,
     save_data,
     remove_days_from_string,

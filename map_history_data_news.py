@@ -2,7 +2,7 @@ from webbrowser import get
 import numpy as np
 import pandas as pd
 
-from utils import (
+from utils_v2 import (
     str_to_datetime,
     datetime_to_str,
     get_next_date,
