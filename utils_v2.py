@@ -15,7 +15,7 @@ DB_HOST = "localhost"
 DB_USERNAME = "root"
 DB_PASSWORD = "mysql123"
 DB_DATABASE = "frx"
-DB_TABLE = "frx_data"
+DB_TABLE = "forex_calendar_events"
 
 
 def make_soup(page_source):

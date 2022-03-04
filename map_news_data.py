@@ -128,7 +128,11 @@ def check_news(symbol, date_time):
 
 
 if __name__ == "__main__":
-    symbol = "CAD_CHF"
-    date_time = "2022-01-31"
+    symbol = "GBP_AUD"
+    date_time = "2022-02-14"
     news_24_events, news_48_events, news_72_events = check_news(
         symbol, date_time)
+
+    print("1", news_24_events)
+    print("2", news_48_events)
+    print("3", news_72_events)

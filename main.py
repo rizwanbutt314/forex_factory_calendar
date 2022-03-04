@@ -7,8 +7,8 @@ from utils import (
     make_soup,
     save_data,
     remove_days_from_string,
-    to_date_from_month_and_day,
-    save_to_db
+    save_to_db,
+    format_datetime_zonebased,
 )
 
 THIS_WEEK_URL = "https://www.forexfactory.com/calendar"
@@ -101,6 +101,9 @@ def main():
             previous = row.find("td", {"class": "previous"}).get_text().strip()
 
             if impact == "High":
+                # Format date/time according to London, as now it get's the data in America/New York Zone
+                _date, __time = format_datetime_zonebased(date_txt, time_txt)
+
                 try:
                     # Get latest release
                     details_url = f"https://www.forexfactory.com/flex.php?do=ajax&contentType=Content&flex=calendar_mainCal&details={event_id}"
@@ -112,8 +115,8 @@ def main():
                 all_data.append({
                     "title": title,
                     "currency": currency,
-                    "date": to_date_from_month_and_day(date_txt),
-                    "time": time_txt,
+                    "date": _date,
+                    "time": __time,
                     "impact": impact.lower(),
                     "actual": actual,
                     "forecast": forecast,

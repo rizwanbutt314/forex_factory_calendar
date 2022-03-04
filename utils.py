@@ -158,8 +158,7 @@ def get_today_date():
     return datetime.datetime.today()
 
 
-
-######### For data mapping
+# For data mapping
 def get_db_connection():
     conn = mysql.connector.connect(
         host=DB_HOST,
@@ -183,6 +182,21 @@ def update_to_db(data, table=""):
                 SET news_24="{record['news_24']}", news_48="{record['news_48']}", news_72="{record['news_72']}" 
                 WHERE symbol="{record['symbol']}" AND date_time="{record['date_time']}" """
         cur.execute(sql)
-        
+
     conn.commit()
     conn.close()
+
+
+def format_datetime_zonebased(_date, _time):
+    date_time_formatted = ""
+    try:
+        _date = to_date_from_month_and_day(_date)
+        date_time_formatted = datetime.datetime.strptime(f"{to_date_from_month_and_day(_date)} {_time}", '%Y-%m-%d %I:%M%p' if (
+            'am' in _time.lower() or 'pm' in _time.lower()) else '%Y-%m-%d %H:%M')
+        london_date_time = date_time_formatted + datetime.timedelta(hours=5)
+        _date = datetime_to_str(london_date_time)
+        _time = datetime_to_str(london_date_time, format='%I:%M%p')
+    except ValueError:
+        pass
+
+    return _date, _time
